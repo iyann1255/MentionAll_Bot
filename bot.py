@@ -33,7 +33,7 @@ async def start(event):
 
 @client.on(events.NewMessage(pattern="^/help$"))
 async def help(event):
-  helptext = "**Help Menu of MentionAll_Bot**\n\nCommand: /mentionall\n__You can use this command with text what you want to say to others.__\n`Example: /mmentionall ketik pesan nya atuhh`\n__You can you this command as a reply to any message. Bot will tag users to that replied messsage__.\n\nFollow [@aseppppv](https://t.me/aseppppv) on my channel"
+  helptext = "**Help Menu of MentionAll_Bot**\n\nCommand: /utag\n__You can use this command with text what you want to say to others.__\n`Example: /utag ketik pesan nya atuhh`\n__You can you this command as a reply to any message. Bot will tag users to that replied messsage__.\n\nFollow [@aseppppv](https://t.me/aseppppv) on my channel"
   await event.reply(
     helptext,
     link_preview=False,
@@ -45,7 +45,7 @@ async def help(event):
     )
   )
   
-@client.on(events.NewMessage(pattern="^/mentionall ?(.*)"))
+@client.on(events.NewMessage(pattern="^/utag ?(.*)"))
 async def mentionall(event):
   chat_id = event.chat_id
   if event.is_private:
