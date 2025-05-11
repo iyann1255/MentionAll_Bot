@@ -5,6 +5,13 @@ from telethon.tl.types import ChannelParticipantAdmin
 from telethon.tl.types import ChannelParticipantCreator
 from telethon.tl.functions.channels import GetParticipantRequest
 from telethon.errors import UserNotParticipantError
+from telethon import events
+from telethon.tl.functions.channels import GetParticipantRequest
+from telethon.tl.types import (
+    ChannelParticipantAdmin,
+    ChannelParticipantCreator,
+    UserNotParticipantError
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -45,6 +52,7 @@ async def help(event):
     )
   )
   
+ 
 @client.on(events.NewMessage(pattern="^/mentionall ?(.*)"))
 async def mentionall(event):
     chat_id = event.chat_id
@@ -78,40 +86,35 @@ async def mentionall(event):
             return await event.respond(
                 "ɪ ᴄᴀɴ'ᴛ ᴍᴇɴᴛɪᴏɴ ᴍᴇᴍʙᴇʀs ꜰᴏʀ ᴏʟᴅᴇʀ ᴍᴇssᴀɢᴇs! (ᴍᴇssᴀɢᴇs ᴡʜɪᴄʜ ᴀʀᴇ sᴇɴᴛ ʙᴇꜰᴏʀᴇ ɪ'ᴍ ᴀᴅᴅᴇᴅ ᴛᴏ ɢʀᴏᴜᴘ)"
             )
-        # Get the full text including newlines
         msg_text = getattr(msg_obj, 'raw_text', '') or getattr(msg_obj, 'message', '') or ''
     else:
         return await event.respond(
             "ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ ᴏʀ ɢɪᴠᴇ ᴍᴇ sᴏᴍᴇ ᴛᴇxᴛ ᴛᴏ ᴍᴇɴᴛɪᴏɴ ᴏᴛʜᴇʀs"
         )
 
+    # Step 1: Mention anggota dalam beberapa batch tanpa teks
     usrnum = 0
     usrtxt = ""
     batch_size = 5
-
     async for usr in client.iter_participants(chat_id):
         usrnum += 1
         usrtxt += f"[{usr.first_name}](tg://user?id={usr.id}) "
-
         if usrnum % batch_size == 0:
-            # Kirim setiap batch mention + seluruh teks dengan semua paragraf
-            txt = f"{usrtxt}\n\n{msg_text}"
-            if mode == "text_on_cmd":
-                await client.send_message(chat_id, txt)
-            elif mode == "text_on_reply":
-                # reply to original message with mention + text
-                await msg_obj.reply(txt)
+            await client.send_message(chat_id, usrtxt)
             await asyncio.sleep(2)
             usrtxt = ""
 
-    # Kirim mention tersisa bila ada
+    # Kirim batch mention tersisa jika ada
     if usrtxt:
-        txt = f"{usrtxt}\n\n{msg_text}"
-        if mode == "text_on_cmd":
-            await client.send_message(chat_id, txt)
-        elif mode == "text_on_reply":
-            await msg_obj.reply(txt)
-        
+        await client.send_message(chat_id, usrtxt)
+
+    # Step 2: Kirim teks lengkap (multiline) sebagai pesan terpisah supaya semua paragraf terbaca
+    if mode == "text_on_cmd":
+        await client.send_message(chat_id, msg_text)
+    elif mode == "text_on_reply":
+        await msg_obj.reply(msg_text)
+
+
 @client.on(events.NewMessage(pattern="^/cancel$"))
 async def cancel_spam(event):
   if not event.chat_id in spam_chats:
