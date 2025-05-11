@@ -55,7 +55,7 @@ async def mentionall(event):
 
     is_admin = False
     try:
-        partici_ = await client(GetParticipantRequest(event.chat_id, event.sender_id))
+        partici_ = await client(GetParticipantRequest(chat_id, event.sender_id))
     except UserNotParticipantError:
         is_admin = False
     else:
@@ -73,11 +73,13 @@ async def mentionall(event):
         msg_text = event.pattern_match.group(1)
     elif event.is_reply:
         mode = "text_on_reply"
-        msg = await event.get_reply_message()
-        if msg is None:
+        msg_obj = await event.get_reply_message()
+        if msg_obj is None:
             return await event.respond(
                 "ɪ ᴄᴀɴ'ᴛ ᴍᴇɴᴛɪᴏɴ ᴍᴇᴍʙᴇʀs ꜰᴏʀ ᴏʟᴅᴇʀ ᴍᴇssᴀɢᴇs! (ᴍᴇssᴀɢᴇs ᴡʜɪᴄʜ ᴀʀᴇ sᴇɴᴛ ʙᴇꜰᴏʀᴇ ɪ'ᴍ ᴀᴅᴅᴇᴅ ᴛᴏ ɢʀᴏᴜᴘ)"
             )
+        # Get the full text including newlines
+        msg_text = getattr(msg_obj, 'raw_text', '') or getattr(msg_obj, 'message', '') or ''
     else:
         return await event.respond(
             "ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ ᴏʀ ɢɪᴠᴇ ᴍᴇ sᴏᴍᴇ ᴛᴇxᴛ ᴛᴏ ᴍᴇɴᴛɪᴏɴ ᴏᴛʜᴇʀs"
@@ -85,29 +87,30 @@ async def mentionall(event):
 
     usrnum = 0
     usrtxt = ""
+    batch_size = 5
+
     async for usr in client.iter_participants(chat_id):
         usrnum += 1
         usrtxt += f"[{usr.first_name}](tg://user?id={usr.id}) "
-        
-        if usrnum == 5:  # send after every 5 users
+
+        if usrnum % batch_size == 0:
+            # Kirim setiap batch mention + seluruh teks dengan semua paragraf
+            txt = f"{usrtxt}\n\n{msg_text}"
             if mode == "text_on_cmd":
-                txt = f"{usrtxt}\n\n{msg_text}"
                 await client.send_message(chat_id, txt)
             elif mode == "text_on_reply":
-                # reply & append mention text
-                await msg.reply(usrtxt)
+                # reply to original message with mention + text
+                await msg_obj.reply(txt)
             await asyncio.sleep(2)
-            usrnum = 0
             usrtxt = ""
 
-    # send remaining users mention
+    # Kirim mention tersisa bila ada
     if usrtxt:
+        txt = f"{usrtxt}\n\n{msg_text}"
         if mode == "text_on_cmd":
-            txt = f"{usrtxt}\n\n{msg_text}"
             await client.send_message(chat_id, txt)
         elif mode == "text_on_reply":
-            await msg.reply(usrtxt)
-
+            await msg_obj.reply(txt)
         
 @client.on(events.NewMessage(pattern="^/cancel$"))
 async def cancel_spam(event):
