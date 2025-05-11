@@ -45,7 +45,7 @@ async def help(event):
     )
   )
   
-@client.on(events.NewMessage(pattern="^/utag ?(.*)"))
+@client.on(events.NewMessage(pattern="^/mentionall ?(.*)"))
 async def mentionall(event):
     chat_id = event.chat_id
     if event.is_private:
@@ -69,12 +69,10 @@ async def mentionall(event):
     if event.pattern_match.group(1) and event.is_reply:
         return await event.respond("ɢɪᴠᴇ ᴍᴇ ᴏɴᴇ ᴀʀɢᴜᴍᴇɴᴛ")
     elif event.pattern_match.group(1):
-        mode = "text_on_cmd"
         msg = event.pattern_match.group(1)
     elif event.is_reply:
-        mode = "text_on_reply"
         msg = await event.get_reply_message()
-        if msg == None:
+        if msg is None:
             return await event.respond(
                 "ɪ ᴄᴀɴ'ᴛ ᴍᴇɴᴛɪᴏɴ ᴍᴇᴍʙᴇʀs ꜰᴏʀ ᴏʟᴅᴇʀ ᴍᴇssᴀɢᴇs! (ᴍᴇssᴀɢᴇs ᴡʜɪᴄʜ ᴀʀᴇ sᴇɴᴛ ʙᴇꜰᴏʀᴇ ɪ'ᴍ ᴀᴅᴅᴇᴅ ᴛᴏ ɢʀᴏᴜᴘ)"
             )
@@ -83,27 +81,29 @@ async def mentionall(event):
             "ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ ᴏʀ ɢɪᴠᴇ ᴍᴇ sᴏᴍᴇ ᴛᴇxᴛ ᴛᴏ ᴍᴇɴᴛɪᴏɴ ᴏᴛʜᴇʀs"
         )
 
-    spam_chats.append(chat_id)
     usrnum = 0
     usrtxt = ""
     async for usr in client.iter_participants(chat_id):
-        if not chat_id in spam_chats:
-            break
         usrnum += 1
         usrtxt += f"[{usr.first_name}](tg://user?id={usr.id}) "
-        if usrnum == 5:
-            if mode == "text_on_cmd":
-                txt = f"{usrtxt}\n\n{msg}"
-                await client.send_message(chat_id, txt)
-            elif mode == "text_on_reply":
+        
+        # Kirim pesan setiap 5 pengguna
+        if usrnum % 5 == 0:
+            if event.is_reply:
                 await msg.reply(usrtxt)
-            await asyncio.sleep(2)
-            usrnum = 0
-            usrtxt = ""
-    try:
-        spam_chats.remove(chat_id)
-    except:
-        pass
+            else:
+                await client.send_message(chat_id, usrtxt)
+            await asyncio.sleep(2)  # Delay untuk menghindari spam
+            usrtxt = ""  # Reset teks setelah mengirim
+
+    # Kirim sisa pengguna yang belum dikirim
+    if usrtxt:
+        if event.is_reply:
+            await msg.reply(usrtxt)
+        else:
+            await client.send_message(chat_id, usrtxt)
+
+
         
 @client.on(events.NewMessage(pattern="^/cancel$"))
 async def cancel_spam(event):
