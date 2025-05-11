@@ -5,13 +5,7 @@ from telethon.tl.types import ChannelParticipantAdmin
 from telethon.tl.types import ChannelParticipantCreator
 from telethon.tl.functions.channels import GetParticipantRequest
 from telethon.errors import UserNotParticipantError
-from telethon import events
-from telethon.tl.functions.channels import GetParticipantRequest
-from telethon.tl.types import (
-    ChannelParticipantAdmin,
-    ChannelParticipantCreator,
-    UserNotParticipantError
-)
+
 
 logging.basicConfig(
     level=logging.INFO,
