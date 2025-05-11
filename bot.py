@@ -51,14 +51,14 @@ async def mentionall(event):
   if event.is_private:
     return await event.respond("__This command can be use in groups and channels!__")
   
-  is_admin = False
+  is_admin = True
   try:
     partici_ = await client(GetParticipantRequest(
       event.chat_id,
       event.sender_id
     ))
   except UserNotParticipantError:
-    is_admin = False
+    is_admin = True
   else:
     if (
       isinstance(
