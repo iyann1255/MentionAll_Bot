@@ -69,8 +69,10 @@ async def mentionall(event):
     if event.pattern_match.group(1) and event.is_reply:
         return await event.respond("ɢɪᴠᴇ ᴍᴇ ᴏɴᴇ ᴀʀɢᴜᴍᴇɴᴛ")
     elif event.pattern_match.group(1):
-        msg = event.pattern_match.group(1)
+        mode = "text_on_cmd"
+        msg_text = event.pattern_match.group(1)
     elif event.is_reply:
+        mode = "text_on_reply"
         msg = await event.get_reply_message()
         if msg is None:
             return await event.respond(
@@ -87,22 +89,24 @@ async def mentionall(event):
         usrnum += 1
         usrtxt += f"[{usr.first_name}](tg://user?id={usr.id}) "
         
-        # Kirim pesan setiap 5 pengguna
-        if usrnum % 5 == 0:
-            if event.is_reply:
+        if usrnum == 5:  # send after every 5 users
+            if mode == "text_on_cmd":
+                txt = f"{usrtxt}\n\n{msg_text}"
+                await client.send_message(chat_id, txt)
+            elif mode == "text_on_reply":
+                # reply & append mention text
                 await msg.reply(usrtxt)
-            else:
-                await client.send_message(chat_id, usrtxt)
-            await asyncio.sleep(2)  # Delay untuk menghindari spam
-            usrtxt = ""  # Reset teks setelah mengirim
+            await asyncio.sleep(2)
+            usrnum = 0
+            usrtxt = ""
 
-    # Kirim sisa pengguna yang belum dikirim
+    # send remaining users mention
     if usrtxt:
-        if event.is_reply:
+        if mode == "text_on_cmd":
+            txt = f"{usrtxt}\n\n{msg_text}"
+            await client.send_message(chat_id, txt)
+        elif mode == "text_on_reply":
             await msg.reply(usrtxt)
-        else:
-            await client.send_message(chat_id, usrtxt)
-
 
         
 @client.on(events.NewMessage(pattern="^/cancel$"))
